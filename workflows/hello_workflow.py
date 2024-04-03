@@ -1,5 +1,5 @@
 from temporalio import workflow
-from activities.hello_activity import say_hello
+from activites import say_hello
 
 @workflow.defn
 class HelloWorkflow:
