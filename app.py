@@ -27,7 +27,7 @@ async def main():
     # Create a Temporal worker
     worker = Worker(
         client,
-        task_queue="hello-task-queue",
+        task_queue="main-queue",
         workflows=[HelloWorkflow],
         activities=[say_hello],
     )
