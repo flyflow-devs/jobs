@@ -1,1 +1,2 @@
 from .hello_workflow import HelloWorkflow
+from .evaluator_workflow import EvaluatorWorkflow

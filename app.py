@@ -3,8 +3,8 @@ import os
 from dotenv import load_dotenv
 from temporalio.client import Client, TLSConfig
 from temporalio.worker import Worker
-from activites import say_hello
-from workflows import HelloWorkflow
+from activites import say_hello, get_model_output, measure_meaning_similarity, measure_latency, measure_structure_similarity
+from workflows import HelloWorkflow, EvaluatorWorkflow
 
 async def main():
     # Load environment variables from .env file
@@ -28,8 +28,8 @@ async def main():
     worker = Worker(
         client,
         task_queue="main-queue",
-        workflows=[HelloWorkflow],
-        activities=[say_hello],
+        workflows=[HelloWorkflow, EvaluatorWorkflow],
+        activities=[say_hello, get_model_output, measure_meaning_similarity, measure_latency, measure_structure_similarity],
     )
 
     # Run the worker

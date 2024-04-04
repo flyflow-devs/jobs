@@ -4,7 +4,9 @@ import time
 from flyflowclient import OpenAI
 from scipy.spatial.distance import cosine
 import json
+from temporalio import activity
 
+@activity.defn
 async def get_model_output(model: str, prompt: list) -> str:
     client = OpenAI(base_url="https://api.flyflow.dev/v1", api_key=os.getenv("FLYFLOW_API_KEY"))
     response = client.chat.completions.create(
@@ -14,6 +16,7 @@ async def get_model_output(model: str, prompt: list) -> str:
     )
     return response.choices[0].message.content
 
+@activity.defn
 async def measure_latency(model: str) -> float:
     client = OpenAI(base_url="https://api.flyflow.dev/v1", api_key=os.getenv("FLYFLOW_API_KEY"))
     prompt = [{"role": "user", "content": "What's the meaning of life?"}]
@@ -33,6 +36,7 @@ async def measure_latency(model: str) -> float:
     tokens_per_second = total_tokens / elapsed_time
     return tokens_per_second
 
+@activity.defn
 async def measure_meaning_similarity(reference_output: str, target_output: str) -> float:
     client = OpenAI(base_url="https://api.flyflow.dev/v1", api_key=os.getenv("FLYFLOW_API_KEY"))
     reference_embedding = client.embeddings.create(input=reference_output, model="text-embedding-ada-002").data[0].embedding
@@ -40,6 +44,7 @@ async def measure_meaning_similarity(reference_output: str, target_output: str) 
     cosine_similarity = 1 - cosine(reference_embedding, target_embedding)
     return cosine_similarity
 
+@activity.defn
 async def measure_structure_similarity(reference_output: str, target_output: str) -> float:
     client = OpenAI(base_url="https://api.flyflow.dev/v1", api_key=os.getenv("FLYFLOW_API_KEY"))
     prompt = [

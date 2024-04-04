@@ -3,12 +3,13 @@ from typing import List
 from temporalio import workflow
 from temporalio.workflow import defn
 
-from activites import (
-    get_model_output,
-    measure_latency,
-    measure_meaning_similarity,
-    measure_structure_similarity,
-)
+with workflow.unsafe.imports_passed_through():
+    from activites import (
+        get_model_output,
+        measure_latency,
+        measure_meaning_similarity,
+        measure_structure_similarity,
+    )
 
 @defn
 class EvaluatorWorkflow:
