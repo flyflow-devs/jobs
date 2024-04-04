@@ -1,25 +1,57 @@
 import asyncio
+import os
+import time
+from flyflowclient import OpenAI
+from scipy.spatial.distance import cosine
+import json
 
-async def get_model_output(model: str, prompt: dict) -> str:
-    # Mocked activity to get the output of a model for a given prompt
-    # Replace this with the actual implementation
-    await asyncio.sleep(1)  # Simulate some processing time
-    return f"Output from {model} for prompt: {prompt}"
+async def get_model_output(model: str, prompt: list) -> str:
+    client = OpenAI(base_url="https://api.flyflow.dev/v1", api_key=os.getenv("FLYFLOW_API_KEY"))
+    response = client.chat.completions.create(
+        model=model,
+        messages=prompt,
+        tags=["eval"]
+    )
+    return response.choices[0].message.content
 
 async def measure_latency(model: str) -> float:
-    # Mocked activity to measure the latency (tokens/second) of a model
-    # Replace this with the actual implementation
-    await asyncio.sleep(1)  # Simulate some processing time
-    return 100.0  # Return a dummy value
+    client = OpenAI(base_url="https://api.flyflow.dev/v1", api_key=os.getenv("FLYFLOW_API_KEY"))
+    prompt = [{"role": "user", "content": "What's the meaning of life?"}]
+    total_tokens = 0
+    start_time = time.time()
+
+    for _ in range(7):
+        response = client.chat.completions.create(
+            model=model,
+            messages=prompt,
+            tags=["latency_test"]
+        )
+        total_tokens += response.usage.total_tokens
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    tokens_per_second = total_tokens / elapsed_time
+    return tokens_per_second
 
 async def measure_meaning_similarity(reference_output: str, target_output: str) -> float:
-    # Mocked activity to measure the similarity of meaning between two model outputs
-    # Replace this with the actual implementation
-    await asyncio.sleep(1)  # Simulate some processing time
-    return 0.8  # Return a dummy value
+    client = OpenAI(base_url="https://api.flyflow.dev/v1", api_key=os.getenv("FLYFLOW_API_KEY"))
+    reference_embedding = client.embeddings.create(input=reference_output, model="text-embedding-ada-002").data[0].embedding
+    target_embedding = client.embeddings.create(input=target_output, model="text-embedding-ada-002").data[0].embedding
+    cosine_similarity = 1 - cosine(reference_embedding, target_embedding)
+    return cosine_similarity
 
 async def measure_structure_similarity(reference_output: str, target_output: str) -> float:
-    # Mocked activity to measure the structural similarity between two model outputs
-    # Replace this with the actual implementation
-    await asyncio.sleep(1)  # Simulate some processing time
-    return 0.7  # Return a dummy value
+    client = OpenAI(base_url="https://api.flyflow.dev/v1", api_key=os.getenv("FLYFLOW_API_KEY"))
+    prompt = [
+        {"role": "system", "content": "You are an AI assistant that compares the structural similarity of two text inputs on a scale of 1-100. Output your response as a JSON object with a 'similarity_score' key."},
+        {"role": "user", "content": f"Reference output:\n{reference_output}\n\nTarget output:\n{target_output}\n\nCompare the structural similarity of the reference output and the target output on a scale of 1-100. Respond with a JSON object containing the 'similarity_score' key."}
+    ]
+    response = client.chat.completions.create(
+        model="gpt-4-turbo-preview",
+        messages=prompt,
+        response_format={"type": "json_object"},
+        tags=["structure_similarity"]
+    )
+    json_response = json.loads(response.choices[0].message.content)
+    similarity_score = float(json_response["similarity_score"])
+    return similarity_score
